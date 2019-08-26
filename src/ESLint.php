@@ -14,6 +14,7 @@ use GrumPHP\Task\Context\ContextInterface;
 use GrumPHP\Task\Context\GitPreCommitContext;
 use GrumPHP\Task\Context\RunContext;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Process\ExecutableFinder;
 
 /**
  * Class ESLint
@@ -27,7 +28,7 @@ final class ESLint extends AbstractExternalTask
      *
      * @return string
      */
-    public function getName()
+    public function getName() : string
     {
         return 'eslint';
     }
@@ -37,7 +38,7 @@ final class ESLint extends AbstractExternalTask
      *
      * @return array
      */
-    public function getConfiguration()
+    public function getConfiguration() : array
     {
         $configured = $this->grumPHP->getTaskConfiguration($this->getName());
 
@@ -49,7 +50,7 @@ final class ESLint extends AbstractExternalTask
      *
      * @return OptionsResolver
      */
-    public function getConfigurableOptions()
+    public function getConfigurableOptions() : \Symfony\Component\OptionsResolver\OptionsResolver
     {
         $resolver = new OptionsResolver();
         $resolver->setDefaults(
@@ -72,9 +73,23 @@ final class ESLint extends AbstractExternalTask
      *
      * @return bool
      */
-    public function canRunInContext(ContextInterface $context)
+    public function canRunInContext(ContextInterface $context) : bool
     {
         return ($context instanceof GitPreCommitContext || $context instanceof RunContext);
+    }
+
+    private function searchBin() : ProcessArgumentsCollection
+    {
+        // Search executable:
+        $this->executableFinder = new ExecutableFinder();
+        $executable = $this->executableFinder->find('eslint', null, ['./node_modules/.bin']);
+        if (!$executable) {
+            throw new RuntimeException(
+                sprintf('The executable for "%s" could not be found.', $command)
+            );
+        }
+
+        return ProcessArgumentsCollection::forExecutable($executable);
     }
 
     /**
@@ -82,16 +97,16 @@ final class ESLint extends AbstractExternalTask
      *
      * @return TaskResultInterface
      */
-    public function run(ContextInterface $context)
+    public function run(ContextInterface $context) : \GrumPHP\Runner\TaskResultInterface
     {
-        $files = $context->getFiles()->name('*.js');
+        $files = $context->getFiles()->names(['*.js', '*.vue']);
         if (0 === count($files)) {
             return TaskResult::createSkipped($this, $context);
         }
 
         $config = $this->getConfiguration();
 
-        $arguments = $this->processBuilder->createArgumentsForCommand('eslint');
+        $arguments = $this->searchBin();
         $arguments->add('--format=table');
         $arguments->addOptionalArgument('--config %s', $config['config']);
         $arguments->addOptionalArgument('--debug', $config['debug']);
