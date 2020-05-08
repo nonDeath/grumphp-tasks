@@ -24,33 +24,11 @@ use Symfony\Component\Process\ExecutableFinder;
 final class ESLint extends AbstractExternalTask
 {
     /**
-     * getName
-     *
-     * @return string
-     */
-    public function getName() : string
-    {
-        return 'eslint';
-    }
-
-    /**
-     * getconfiguration
-     *
-     * @return array
-     */
-    public function getConfiguration() : array
-    {
-        $configured = $this->grumPHP->getTaskConfiguration($this->getName());
-
-        return $this->getConfigurableOptions()->resolve($configured);
-    }
-
-    /**
      * getConfigurableOptions
      *
      * @return OptionsResolver
      */
-    public function getConfigurableOptions() : \Symfony\Component\OptionsResolver\OptionsResolver
+    public static function getConfigurableOptions() : OptionsResolver
     {
         $resolver = new OptionsResolver();
         $resolver->setDefaults(
@@ -97,14 +75,14 @@ final class ESLint extends AbstractExternalTask
      *
      * @return TaskResultInterface
      */
-    public function run(ContextInterface $context) : \GrumPHP\Runner\TaskResultInterface
+    public function run(ContextInterface $context) : TaskResultInterface
     {
         $files = $context->getFiles()->names(['*.js', '*.vue']);
         if (0 === count($files)) {
             return TaskResult::createSkipped($this, $context);
         }
 
-        $config = $this->getConfiguration();
+        $config = $this->getConfig()->getOptions();
 
         $arguments = $this->searchBin();
         $arguments->add('--format=table');
