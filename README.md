@@ -38,10 +38,31 @@ services:
 
 ## Installation
 
+**composer.json file**
+
+```json
+...
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/nonDeath/grumphp-tasks.git"
+        }
+    ],
+...
+    "require-dev": {
+        // add the next dependency
+        "stickee/grumphp-tasks": "dev-master"
+    },
 ```
-composer require stickee/grumphp-tasks
+
+**Next:**
+
 ```
-and then either
+composer install
+```
+
+... and then either
+
 ```
 yarn add eslint eslint-config-standard eslint-plugin-promise eslint-plugin-standard
 ```
